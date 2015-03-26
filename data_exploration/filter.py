@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Mar 24 17:42:22 2015
+Created on Wed Mar 25 22:23:38 2015
 
 @author: anthonyreinette
 """
@@ -12,6 +12,9 @@ import scipy.fftpack
 import scipy.stats
 import matplotlib.pyplot as plt
 from sklearn.cross_validation import train_test_split
+import scipy.signal
+
+# Loading data
 
 dataset = io.loadmat('data_challenge.mat')
 
@@ -28,6 +31,24 @@ X_test_freq = scipy.fftpack.fft(X_test,axis=1)
 X_test_freq = (2.0 / N) * np.apply_along_axis(np.abs,1,X_test_freq)
 
 X_freq = scipy.fftpack.fftfreq(N,T)
+
+# Filtering data
+N = 1001
+Fc = 10
+Fs = 200
+# provide them to firwin
+
+h = scipy.signal.firwin( numtaps=N, cutoff=50, nyq=Fs/2, window='hamming')
+
+y = scipy.signal.lfilter( h, 1.0, X_train_freq[0]) # 'x' is the time-series data you are filtering
+
+def low_pass_filter(xz):
+    """
+    Filter the matrix
+    """
+    return scipy.signal.lfilter(h, 1.0, xz)
+    
+X_train_freq = np.apply_along_axis(low_pass_filter,1,X_train_freq)
 
 XX_train = np.c_[
                  np.std(X_train, axis=1), 
@@ -55,15 +76,6 @@ XX_test = np.c_[
                 np.mean(X_test_freq**2,axis=1),
                 scipy.stats.skew(X_test_freq,axis=1)]
 
-'''
-# 4 new features
-np.mean(X_train_freq[:,0:N/8]**2,axis=1)
-np.mean(X_train_freq[:,N/8:2*N/8]**2,axis=1)
-np.mean(X_train_freq[:,2*N/8:3*N/8]**2,axis=1)
-np.mean(X_train_freq[:,3*N/8:N/2]**2,axis=1)
-'''
-
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 clf = RandomForestClassifier()
 #clf = KNeighborsClassifier(n_neighbors=15)
@@ -71,3 +83,4 @@ clf = RandomForestClassifier()
 y_pred = clf.fit(XX_train, y_train).predict(XX_test)
 score = clf.score(XX_test,y_test)
 print score
+
