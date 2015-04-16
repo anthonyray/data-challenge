@@ -2,15 +2,22 @@
 
 TODO :
 
-- Fix the energy level
-- Wavelets on spectral decomposition
-- Faire un modèle en couche qui détecte d'abord le wake state
+- Fix the energy level for wavelets
+- Wavelets on **spectral decomposition**
+- Faire un modèle en couches qui détecte d'abord le wake state
+- New features :
+  - Central Frequency
+  - RPEB
+  - Itakura distance
+  - 1-dimensional reduction features (cf paper korea)
+
 
 DOING :
-- Read paper on EEG features
 
+- Make sure to have very clean spectral decomposition (check the paper)
 
 DONE :
+- Read paper on EEG features
 - Use wavelets coefficients :
   - TOP K : Doesn't yield good results
   - Different types : Haar & DB1
