@@ -26,7 +26,7 @@ climsg.done_loading_data(end_loading_data - start_loading_data)
 """
 Splitting data into training and test sets
 """
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 
 """
@@ -42,32 +42,7 @@ We have three categories of features :
 """
 Wavelets Features Construction
 """
-import pywt
-
-# Wavelets decomposition functions
-def haar_dwt_1(a):
-    wavelets = pywt.wavedec(a,'haar')
-    return wavelets[0][0]
-
-def haar_dwt_2(a):
-    wavelets = pywt.wavedec(a,'haar')
-    return wavelets[0][1]
-
-def haar_dwt_3(a):
-    wavelets = pywt.wavedec(a,'haar')
-    return wavelets[1][0]
-
-def haar_dwt_4(a):
-    wavelets = pywt.wavedec(a,'haar')
-    return wavelets[1][1]
-
-def wavelets_average_energy(a,lvl):
-    wavelets = pywt.wavedec(a,'haar',level=lvl)
-    return math.sqrt(wavelets[0][0] ** 2 + wavelets[0][1] ** 2)
-
-def wavelets_details_energy(a,lvl):
-    wavelets = pywt.wavedec(a,'haar',level=lvl)
-    return math.sqrt(wavelets[1][0] ** 2 + wavelets[1][1] ** 2)
+from wavelets import *
 
 def compute_wavelets_features_train_test(X_train,X_test):
     """Generate features matrix for training set and test set
@@ -92,13 +67,28 @@ def compute_wavelets_features_train_test(X_train,X_test):
 def compute_wavelets_features(X):
     XX = np.c_[
 
+                     np.apply_along_axis(haar_dwt_1,1,X),
+                     np.apply_along_axis(haar_dwt_2,1,X),
+                     np.apply_along_axis(haar_dwt_3,1,X),
+                     np.apply_along_axis(haar_dwt_4,1,X),
+                     np.apply_along_axis(haar_dwt_5,1,X),
+                     np.apply_along_axis(haar_dwt_6,1,X),
+                     np.apply_along_axis(haar_dwt_7,1,X),
+                     np.apply_along_axis(haar_dwt_8,1,X),
                      np.apply_along_axis(wavelets_details_energy,1,X,1),
-                     np.apply_along_axis(wavelets_details_energy,1,X,7),
+                     np.apply_along_axis(wavelets_average_energy,1,X,7),
                      np.apply_along_axis(wavelets_details_energy,1,X,8),
-                     np.apply_along_axis(wavelets_details_energy,1,X,9),
+                     np.apply_along_axis(wavelets_average_energy,1,X,9),
                      np.apply_along_axis(wavelets_details_energy,1,X,10),
-                     np.apply_along_axis(wavelets_details_energy,1,X,11),
-                     np.apply_along_axis(wavelets_details_energy,1,X,12)
+                     np.apply_along_axis(wavelets_average_energy,1,X,11),
+                     np.apply_along_axis(wavelets_details_energy,1,X,12),
+                     np.apply_along_axis(db_wavelets_details_energy,1,X,1),
+                     np.apply_along_axis(db_wavelets_average_energy,1,X,7),
+                     np.apply_along_axis(db_wavelets_details_energy,1,X,8),
+                     np.apply_along_axis(db_wavelets_average_energy,1,X,9),
+                     np.apply_along_axis(db_wavelets_details_energy,1,X,10),
+                     np.apply_along_axis(db_wavelets_average_energy,1,X,11),
+                     np.apply_along_axis(db_wavelets_details_energy,1,X,12)
                      ]
     return XX
 
@@ -146,7 +136,7 @@ def compute_static_features(X):
     XX = np.c_[
                  np.std(X, axis=1),
                  np.max(X,axis=1),
-                 np.min(X,axis=1)/np.max(X,axis=1)
+                 np.min(X,axis=1)/np.max(X,axis=1),
     ]
     return XX
 
@@ -211,9 +201,9 @@ Training classifier
 from sklearn.svm import SVC
 from sklearn import preprocessing
 from sklearn.ensemble import RandomForestClassifier
-clf = SVC(C=10)
-XX_train_scaled = preprocessing.scale(XX_train)
-clf.fit(XX_train_scaled,y_train)
+
+clf = RandomForestClassifier()
+clf.fit(XX_train,y_train)
 
 """
 Predict classes on test set
