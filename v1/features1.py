@@ -1,0 +1,285 @@
+import sys
+import time
+import numpy as np
+from scipy import io
+import scipy.fftpack
+import scipy.stats
+import matplotlib.pyplot as plt
+from sklearn.cross_validation import train_test_split
+import math
+import climsg
+
+total_start = time.time()
+climsg.welcome_message(sys.argv[0])
+
+"""
+Loading data
+"""
+climsg.loading_data()
+start_loading_data = time.time()
+dataset = io.loadmat('data_challenge.mat')
+sleep_labels = {1:'N1',2:'N2',3:'N3',4:'R ',5:'W '}
+X, y, X_final_test = dataset['X_train'], dataset['y_train'], dataset['X_test']
+end_loading_data = time.time()
+climsg.done_loading_data(end_loading_data - start_loading_data)
+
+"""
+Splitting data into training and test sets
+"""
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30, random_state=42)
+
+
+"""
+Features Construction
+
+We have three categories of features :
+    - Static Features
+    - Frequency domain features
+    - Wavelet domain features
+"""
+
+
+"""
+Wavelets Features Construction
+"""
+import pywt
+
+# Wavelets decomposition functions
+def haar_dwt_1(a):
+    wavelets = pywt.wavedec(a,'haar')
+    return wavelets[0][0]
+
+def haar_dwt_2(a):
+    wavelets = pywt.wavedec(a,'haar')
+    return wavelets[0][1]
+
+def haar_dwt_3(a):
+    wavelets = pywt.wavedec(a,'haar')
+    return wavelets[1][0]
+
+def haar_dwt_4(a):
+    wavelets = pywt.wavedec(a,'haar')
+    return wavelets[1][1]
+
+def wavelets_average_energy(a,lvl):
+    wavelets = pywt.wavedec(a,'haar',level=lvl)
+    return math.sqrt(wavelets[0][0] ** 2 + wavelets[0][1] ** 2)
+
+def wavelets_details_energy(a,lvl):
+    wavelets = pywt.wavedec(a,'haar',level=lvl)
+    return math.sqrt(wavelets[1][0] ** 2 + wavelets[1][1] ** 2)
+
+def compute_wavelets_features_train_test(X_train,X_test):
+    """Generate features matrix for training set and test set
+
+    Parameters
+    ----------
+    X_train : array, shape=(n,p) where p is a power of 2
+        Training set
+    X_test : array, shape=(m,p) where p is a power of 2
+        Test set
+
+    Returns
+    -------
+    XX_train : array, shape=(n, p)
+        Features training matrix
+    X_test : array, shape=(n,p)
+        Features test matrix
+    """
+
+    return compute_wavelets_features(X_train), compute_wavelets_features(X_test)
+
+def compute_wavelets_features(X):
+    XX = np.c_[
+
+                     np.apply_along_axis(wavelets_details_energy,1,X,1),
+                     np.apply_along_axis(wavelets_details_energy,1,X,7),
+                     np.apply_along_axis(wavelets_details_energy,1,X,8),
+                     np.apply_along_axis(wavelets_details_energy,1,X,9),
+                     np.apply_along_axis(wavelets_details_energy,1,X,10),
+                     np.apply_along_axis(wavelets_details_energy,1,X,11),
+                     np.apply_along_axis(wavelets_details_energy,1,X,12)
+                     ]
+    return XX
+
+"""
+Frequency Features Construction
+"""
+
+def compute_frequency_features_train_test(X_train,X_test):
+    """Generate frequency features matrix for training set and test set
+
+    Parameters
+    ----------
+    X_train : array, shape=(n,p) where p is a power of 2
+        Training set
+    X_test : array, shape=(m,p) where p is a power of 2
+        Test set
+
+    Returns
+    -------
+    XX_train : array, shape=(n, p)
+        Features training matrix
+    X_test : array, shape=(n,p)
+        Features test matrix
+    """
+
+    return compute_frequency_features(X_train),compute_frequency_features(X_test)
+
+def compute_frequency_features(X):
+    XX = np.c_[
+                     np.mean(X[:,0:N/8]**2,axis=1),
+                     np.mean(X[:,N/8:2*N/8]**2,axis=1),
+                     np.mean(X[:,2*N/8:3*N/8]**2,axis=1),
+                     np.mean(X[:,3*N/8:N/2]**2,axis=1),
+                     np.percentile(X,70,axis=1),
+                     np.percentile(X,20,axis=1),
+                     np.mean(X**2,axis=1),
+                     scipy.stats.skew(X,axis=1)]
+    return XX
+
+"""
+Static Features Construction
+"""
+
+def compute_static_features(X):
+    XX = np.c_[
+                 np.std(X, axis=1),
+                 np.max(X,axis=1),
+                 np.min(X,axis=1)/np.max(X,axis=1)
+    ]
+    return XX
+
+def compute_static_features_train_test(X_train,X_test):
+    return compute_static_features(X_train),compute_static_features(X_test)
+
+
+"""
+Features Construction
+"""
+climsg.features_building_init()
+# Preparing data for wavelet features extraction
+
+# Padding data
+X_train_w = np.pad(X_train,((0,0),(0,2192)),mode="constant")
+X_test_w = np.pad(X_test,((0,0),(0,2192)),mode="constant")
+
+# Preparing data for frequency features extraction
+
+N = X_train.shape[1]
+T = 30.0 / float(N)  # Periode d'echantillonage
+X_train_freq = scipy.fftpack.fft(X_train,axis=1)
+X_train_freq = (2.0 / N) * np.apply_along_axis(np.abs,1,X_train_freq)
+
+X_test_freq = scipy.fftpack.fft(X_test,axis=1)
+X_test_freq = (2.0 / N) * np.apply_along_axis(np.abs,1,X_test_freq)
+
+# Building features for frequency :
+start_freq = time.time()
+
+XX_train_freq,XX_test_freq = compute_frequency_features_train_test(X_train_freq,X_test_freq)
+
+nb_freq_features = XX_train_freq.shape[1]
+end_freq = time.time()
+climsg.freq_features(end_freq-start_freq,nb_freq_features)
+
+# Building features for wavelets
+start_wav = time.time()
+
+XX_train_wav, XX_test_wav = compute_wavelets_features_train_test(X_train_w,X_test_w)
+
+nb_wav_features = XX_train_wav.shape[1]
+end_wav = time.time()
+climsg.wav_features(end_wav - start_wav,nb_wav_features)
+
+# Building static features
+start_static = time.time()
+
+XX_train_stat,XX_test_stat = compute_static_features_train_test(X_train,X_test)
+
+nb_stat_features = XX_train_stat.shape[1]
+end_static = time.time()
+climsg.stat_features(end_static-start_static,nb_stat_features)
+# Combining features
+
+XX_train = np.c_[XX_train_freq,XX_train_wav,XX_train_stat]
+XX_test = np.c_[XX_test_freq,XX_test_wav,XX_test_stat]
+
+"""
+Training classifier
+"""
+from sklearn.svm import SVC
+from sklearn import preprocessing
+from sklearn.ensemble import RandomForestClassifier
+clf = SVC(C=10)
+XX_train_scaled = preprocessing.scale(XX_train)
+clf.fit(XX_train_scaled,y_train)
+
+"""
+Predict classes on test set
+
+"""
+climsg.predict()
+start_pred = time.time()
+
+
+y_pred = clf.predict(XX_test)
+
+
+end_pred = time.time()
+climsg.done_predicting(end_pred - start_pred)
+
+"""
+Report
+"""
+climsg.report()
+
+from sklearn.metrics import classification_report
+print classification_report(y_pred,y_test,
+                            target_names=[l for l in sleep_labels.values()])
+
+
+"""
+Export prediction
+"""
+
+def export(X,y,X_pred):
+    # Data Preparation
+    X_w = np.pad(X,((0,0),(0,2192)),mode="constant")  # Wavelets
+    X_pred_w = np.pad(X_pred,((0,0),(0,2192)),mode="constant")
+
+    N = X.shape[1]  # Frequency
+    T = 30.0 / float(N)
+    X_f = scipy.fftpack.fft(X,axis=1)
+    X_pred_f = scipy.fftpack.fft(X_pred,axis=1)
+
+    XX_freq = compute_frequency_features(X_f)
+    XX_pred_freq = compute_frequency_features(X_pred_f)
+
+    XX_wav = compute_wavelets_features(X_w)
+    XX_pred_wav = compute_wavelets_features(X_pred_w)
+
+    XX_stat = compute_static_features(X)
+    XX_pred_stat = compute_static_features(X_pred)
+
+    XX = np.c_[XX_stat,XX_freq,XX_wav]
+    XX_pred = np.c_[XX_pred_stat,XX_pred_freq,XX_pred_wav]
+
+    classifier = RandomForestClassifier()
+    classifier.fit(XX,y)
+    y_pred = classifier.predict(XX_pred)
+    np.savetxt('y_pred.txt', y_pred, fmt='%s')
+
+if len(sys.argv) > 1:
+    climsg.export()
+    start_export = time.time()
+    export(X,y,X_final_test)
+    end_export = time.time()
+    climsg.done_export(end_export - start_export)
+
+
+"""
+Finishing
+"""
+total_end = time.time()
+climsg.goodbye(total_end - total_start)
