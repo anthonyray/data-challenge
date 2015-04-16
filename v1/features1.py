@@ -66,29 +66,14 @@ def compute_wavelets_features_train_test(X_train,X_test):
 
 def compute_wavelets_features(X):
     XX = np.c_[
-
-                     np.apply_along_axis(haar_dwt_1,1,X),
                      np.apply_along_axis(haar_dwt_2,1,X),
-                     np.apply_along_axis(haar_dwt_3,1,X),
                      np.apply_along_axis(haar_dwt_4,1,X),
-                     np.apply_along_axis(haar_dwt_5,1,X),
-                     np.apply_along_axis(haar_dwt_6,1,X),
                      np.apply_along_axis(haar_dwt_7,1,X),
                      np.apply_along_axis(haar_dwt_8,1,X),
-                     np.apply_along_axis(wavelets_details_energy,1,X,1),
-                     np.apply_along_axis(wavelets_average_energy,1,X,7),
-                     np.apply_along_axis(wavelets_details_energy,1,X,8),
-                     np.apply_along_axis(wavelets_average_energy,1,X,9),
-                     np.apply_along_axis(wavelets_details_energy,1,X,10),
-                     np.apply_along_axis(wavelets_average_energy,1,X,11),
-                     np.apply_along_axis(wavelets_details_energy,1,X,12),
-                     np.apply_along_axis(db_wavelets_details_energy,1,X,1),
-                     np.apply_along_axis(db_wavelets_average_energy,1,X,7),
-                     np.apply_along_axis(db_wavelets_details_energy,1,X,8),
-                     np.apply_along_axis(db_wavelets_average_energy,1,X,9),
-                     np.apply_along_axis(db_wavelets_details_energy,1,X,10),
-                     np.apply_along_axis(db_wavelets_average_energy,1,X,11),
-                     np.apply_along_axis(db_wavelets_details_energy,1,X,12)
+                     np.apply_along_axis(db_dwt_2,1,X),
+                     np.apply_along_axis(db_dwt_4,1,X),
+                     np.apply_along_axis(db_dwt_7,1,X),
+                     np.apply_along_axis(db_dwt_8,1,X),
                      ]
     return XX
 
@@ -192,8 +177,8 @@ end_static = time.time()
 climsg.stat_features(end_static-start_static,nb_stat_features)
 # Combining features
 
-XX_train = np.c_[XX_train_freq,XX_train_wav,XX_train_stat]
-XX_test = np.c_[XX_test_freq,XX_test_wav,XX_test_stat]
+XX_train = np.c_[XX_train_wav,XX_train_stat]
+XX_test = np.c_[XX_test_wav,XX_test_stat]
 
 """
 Training classifier
