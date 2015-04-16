@@ -104,13 +104,6 @@ def compute_frequency_features_train_test(X_train,X_test):
 
 def compute_frequency_features(X):
     XX = np.c_[
-                     np.mean(X[:,0:N/8]**2,axis=1),
-                     np.mean(X[:,N/8:2*N/8]**2,axis=1),
-                     np.mean(X[:,2*N/8:3*N/8]**2,axis=1),
-                     np.mean(X[:,3*N/8:N/2]**2,axis=1),
-                     np.percentile(X,70,axis=1),
-                     np.percentile(X,20,axis=1),
-                     np.mean(X**2,axis=1),
                      scipy.stats.skew(X,axis=1)]
     return XX
 
@@ -189,8 +182,8 @@ end_static = time.time()
 climsg.stat_features(end_static-start_static,nb_stat_features)
 # Combining features
 
-XX_train = np.c_[XX_train_wav,XX_train_stat]
-XX_test = np.c_[XX_test_wav,XX_test_stat]
+XX_train = np.c_[XX_train_wav,XX_train_stat,XX_train_en,XX_train_freq]
+XX_test = np.c_[XX_test_wav,XX_test_stat,XX_test_en,XX_test_freq]
 
 """
 Training classifier
