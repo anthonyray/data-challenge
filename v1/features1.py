@@ -123,6 +123,7 @@ def compute_static_features(X):
                  np.max(X,axis=1),
                  np.min(X,axis=1)/np.max(X,axis=1),
     ]
+    
     return XX
 
 def compute_static_features_train_test(X_train,X_test):
@@ -142,12 +143,19 @@ X_test_w = np.pad(X_test,((0,0),(0,2192)),mode="constant")
 # Preparing data for frequency features extraction
 
 N = X_train.shape[1]
-T = 30.0 / float(N)  # Periode d'echantillonage
-X_train_freq = scipy.fftpack.fft(X_train,axis=1)
-X_train_freq = (2.0 / N) * np.apply_along_axis(np.abs,1,X_train_freq)
+T = 30.0 / float(N)  # Sampling period
+f = 1.0 / T # Sampling freq
+
+X_train_freq = scipy.fftpack.fft(X_train,N,axis=1)
+X_train_freq = (1.0 / float(N) ) * np.apply_along_axis(np.abs,1,X_train_freq)
+X_train_freq = X_train_freq[:,:N/2]
 
 X_test_freq = scipy.fftpack.fft(X_test,axis=1)
-X_test_freq = (2.0 / N) * np.apply_along_axis(np.abs,1,X_test_freq)
+X_test_freq = (1.0 / N) * np.apply_along_axis(np.abs,1,X_test_freq)
+X_test_freq = X_test_freq[:,:N/2]
+
+freqs = scipy.fftpack.fftfreq(N,T)
+freqs = freqs[:N/2]
 
 # Building features for frequency :
 start_freq = time.time()
