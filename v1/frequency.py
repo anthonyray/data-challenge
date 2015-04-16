@@ -57,7 +57,7 @@ def freq_percentile(p,f,percentile):
 def compute_energy_features(X,fs=1.0, window='hanning', nperseg=None, noverlap=None, nfft=None,
         detrend='constant'):
     if not nperseg:
-        nperseg = np.ceil(X.shape[1] / 2)
+        nperseg = X.shape[1] / 2
     f,P = signal.welch(X, fs, window, nperseg, noverlap, nfft, detrend,axis=1)
     X_energy = np.c_[np.apply_along_axis(mpf,1,P,f),
                      np.apply_along_axis(fmax,1,P,f),
@@ -69,3 +69,7 @@ def compute_energy_features(X,fs=1.0, window='hanning', nperseg=None, noverlap=N
                      np.apply_along_axis(freq_percentile,1,P,f,90)
     ]
     return X_energy
+
+def compute_energy_features_train_test(X_train,X_test,fs=1.0, window='hanning', nperseg=None, noverlap=None, nfft=None,
+        detrend='constant'):
+    return compute_energy_features(X_train,fs,window,nperseg,noverlap,nfft,detrend='constant'),compute_energy_features(X_test,fs,window,nperseg,noverlap,nfft,detrend='constant')

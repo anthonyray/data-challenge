@@ -80,6 +80,7 @@ def compute_wavelets_features(X):
 """
 Frequency Features Construction
 """
+from frequency import *
 
 def compute_frequency_features_train_test(X_train,X_test):
     """Generate frequency features matrix for training set and test set
@@ -123,7 +124,7 @@ def compute_static_features(X):
                  np.max(X,axis=1),
                  np.min(X,axis=1)/np.max(X,axis=1),
     ]
-    
+
     return XX
 
 def compute_static_features_train_test(X_train,X_test):
@@ -162,7 +163,10 @@ start_freq = time.time()
 
 XX_train_freq,XX_test_freq = compute_frequency_features_train_test(X_train_freq,X_test_freq)
 
-nb_freq_features = XX_train_freq.shape[1]
+XX_train_en,XX_test_en = compute_energy_features_train_test(X_train,X_test,f)
+
+nb_freq_features = XX_train_freq.shape[1] + XX_train_en.shape[1]
+
 end_freq = time.time()
 climsg.freq_features(end_freq-start_freq,nb_freq_features)
 
