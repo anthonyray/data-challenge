@@ -104,6 +104,10 @@ def compute_frequency_features_train_test(X_train,X_test):
 
 def compute_frequency_features(X):
     XX = np.c_[
+                     np.mean(X[:,0:N/8]**2,axis=1),
+                     np.mean(X[:,N/8:2*N/8]**2,axis=1),
+                     np.mean(X[:,2*N/8:3*N/8]**2,axis=1),
+                     np.mean(X[:,3*N/8:N/2]**2,axis=1),
                      scipy.stats.skew(X,axis=1)]
     return XX
 
@@ -182,8 +186,8 @@ end_static = time.time()
 climsg.stat_features(end_static-start_static,nb_stat_features)
 # Combining features
 
-XX_train = np.c_[XX_train_wav,XX_train_stat,XX_train_en,XX_train_freq]
-XX_test = np.c_[XX_test_wav,XX_test_stat,XX_test_en,XX_test_freq]
+XX_train = np.c_[XX_train_stat,XX_train_en,XX_train_freq]
+XX_test = np.c_[XX_test_stat,XX_test_en,XX_test_freq]
 
 """
 Training classifier
@@ -191,8 +195,12 @@ Training classifier
 from sklearn.svm import SVC
 from sklearn import preprocessing
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import BaggingClassifier
 
-clf = RandomForestClassifier()
+from sklearn.ensemble import GradientBoostingClassifier
+
+clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,max_depth=1, random_state=0)
 clf.fit(XX_train,y_train)
 
 """

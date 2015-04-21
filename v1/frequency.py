@@ -64,9 +64,6 @@ def compute_energy_features(X,fs=1.0, window='hanning', nperseg=None, noverlap=N
                      np.apply_along_axis(fmax,1,P,f),
                      np.apply_along_axis(Ptotal,1,P,f),
                      np.apply_along_axis(freq_percentile,1,P,f,10),
-                     np.apply_along_axis(freq_percentile,1,P,f,25),
-                     np.apply_along_axis(freq_percentile,1,P,f,50),
-                     np.apply_along_axis(freq_percentile,1,P,f,70),
                      np.apply_along_axis(freq_percentile,1,P,f,90)
     ]
     return X_energy
