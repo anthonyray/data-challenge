@@ -13,15 +13,14 @@ TODO :
 
 
 DOING :
-
-- Make sure to have very clean spectral decomposition (check the paper)
+- Improve score solely working on classifiers.
 
 DONE :
 - Read paper on EEG features
 - Use wavelets coefficients :
   - TOP K : Doesn't yield good results
   - Different types : Haar & DB1
-
+  - Make sure to have very clean spectral decomposition (check the paper)
 - Clean architecture
 
 - Try different wavelets : Not really relevant. Haar & DB & Coif1 don't show real differences

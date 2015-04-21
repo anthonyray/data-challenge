@@ -17,11 +17,13 @@ Loading data
 """
 climsg.loading_data()
 start_loading_data = time.time()
+
 dataset = io.loadmat('data_challenge.mat')
 sleep_labels = {1:'N1',2:'N2',3:'N3',4:'R ',5:'W '}
 X, y, X_final_test = dataset['X_train'], dataset['y_train'], dataset['X_test']
-end_loading_data = time.time()
-climsg.done_loading_data(end_loading_data - start_loading_data)
+
+
+climsg.done_loading_data(time.time() - start_loading_data)
 
 """
 Splitting data into training and test sets
@@ -76,6 +78,7 @@ def compute_wavelets_features(X):
                      np.apply_along_axis(db_dwt_8,1,X),
                      ]
     return XX
+
 
 """
 Frequency Features Construction
@@ -164,8 +167,8 @@ XX_train_en,XX_test_en = compute_energy_features_train_test(X_train,X_test,f)
 
 nb_freq_features = XX_train_freq.shape[1] + XX_train_en.shape[1]
 
-end_freq = time.time()
-climsg.freq_features(end_freq-start_freq,nb_freq_features)
+
+climsg.freq_features(time.time()-start_freq,nb_freq_features)
 
 # Building features for wavelets
 start_wav = time.time()
@@ -173,8 +176,8 @@ start_wav = time.time()
 XX_train_wav, XX_test_wav = compute_wavelets_features_train_test(X_train_w,X_test_w)
 
 nb_wav_features = XX_train_wav.shape[1]
-end_wav = time.time()
-climsg.wav_features(end_wav - start_wav,nb_wav_features)
+
+climsg.wav_features(time.time() - start_wav,nb_wav_features)
 
 # Building static features
 start_static = time.time()
@@ -186,22 +189,24 @@ end_static = time.time()
 climsg.stat_features(end_static-start_static,nb_stat_features)
 # Combining features
 
-XX_train = np.c_[XX_train_stat,XX_train_en,XX_train_freq]
-XX_test = np.c_[XX_test_stat,XX_test_en,XX_test_freq]
+XX_train = np.c_[XX_train_stat,XX_train_en,XX_train_freq,XX_train_wav]
+XX_test = np.c_[XX_test_stat,XX_test_en,XX_test_freq,XX_test_wav]
 
 """
 Training classifier
 """
 from sklearn.svm import SVC
-from sklearn import preprocessing
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import BaggingClassifier
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier, AdaBoostClassifier
+from sklearn.linear_model import LogisticRegression
 
-from sklearn.ensemble import GradientBoostingClassifier
+from sklearn import preprocessing
 
-clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,max_depth=1, random_state=0)
-clf.fit(XX_train,y_train)
+models = [SVC(),KNeighborsClassifier(n_neighbors=20),AdaBoostClassifier(),LogisticRegression(),RandomForestClassifier()]
+predictions = list()
+for clf in models:
+    clf.fit(XX_train,y_train)
+
 
 """
 Predict classes on test set
@@ -211,19 +216,20 @@ climsg.predict()
 start_pred = time.time()
 
 
-y_pred = clf.predict(XX_test)
+for clf in models:
+    predictions.append(clf.predict(XX_test))
 
 
-end_pred = time.time()
-climsg.done_predicting(end_pred - start_pred)
+climsg.done_predicting(time.time() - start_pred)
 
 """
-Report
+Report for all classifiers
 """
+from sklearn.metrics import classification_report
 climsg.report()
 
-from sklearn.metrics import classification_report
-print classification_report(y_pred,y_test,
+for y_pred in predictions:
+    print classification_report(y_pred,y_test,
                             target_names=[l for l in sleep_labels.values()])
 
 
@@ -250,10 +256,13 @@ def export(X,y,X_pred):
     XX_stat = compute_static_features(X)
     XX_pred_stat = compute_static_features(X_pred)
 
-    XX = np.c_[XX_stat,XX_freq,XX_wav]
-    XX_pred = np.c_[XX_pred_stat,XX_pred_freq,XX_pred_wav]
+    XX_en = compute_energy_features(X)
+    XX_pred_en = compute_energy_features(X_pred)
 
-    classifier = RandomForestClassifier()
+    XX = np.c_[XX_stat,XX_freq,XX_wav,XX_en]
+    XX_pred = np.c_[XX_pred_stat,XX_pred_freq,XX_pred_wav,XX_pred_en]
+
+    classifier = LogisticRegression(penalty='l1')
     classifier.fit(XX,y)
     y_pred = classifier.predict(XX_pred)
     np.savetxt('y_pred.txt', y_pred, fmt='%s')
