@@ -25,12 +25,9 @@ def compute_frequency_features_train_test(X_train,X_test):
 def compute_frequency_features(X):
     N = X.shape[1]
     XX = np.c_[
-                     np.mean(X[:,0:N/8]**2,axis=1),
-                     np.mean(X[:,N/8:2*N/8]**2,axis=1),
-                     np.mean(X[:,2*N/8:3*N/8]**2,axis=1),
                      np.mean(X[:,3*N/8:N/2]**2,axis=1),
                      scipy.stats.skew(X,axis=1),
                      scipy.stats.kurtosis(X,axis=1),
-                     np.percentile(X,75,axis=1),
-                     np.percentile(X,20,axis=1)]
+                     np.percentile(X,75,axis=1)
+             ]
     return XX

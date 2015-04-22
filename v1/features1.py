@@ -68,15 +68,9 @@ def compute_wavelets_features_train_test(X_train,X_test):
 
 def compute_wavelets_features(X):
     XX = np.c_[
-                     np.apply_along_axis(haar_dwt_2,1,X),
-                     np.apply_along_axis(haar_dwt_4,1,X),
-                     np.apply_along_axis(haar_dwt_7,1,X),
                      np.apply_along_axis(haar_dwt_8,1,X),
-                     np.apply_along_axis(db_dwt_2,1,X),
-                     np.apply_along_axis(db_dwt_4,1,X),
-                     np.apply_along_axis(db_dwt_7,1,X),
-                     np.apply_along_axis(db_dwt_8,1,X),
-                     ]
+                     np.apply_along_axis(db_dwt_4,1,X)
+              ]
     return XX
 
 
@@ -233,13 +227,13 @@ def export(X,y,X_pred):
     XX_stat = compute_static_features(X)
     XX_pred_stat = compute_static_features(X_pred)
 
-    XX_en = compute_energy_features(X)
-    XX_pred_en = compute_energy_features(X_pred)
+    #XX_en = compute_energy_features(X)
+    #XX_pred_en = compute_energy_features(X_pred)
 
-    XX = np.c_[XX_stat,XX_freq,XX_wav,XX_en]
-    XX_pred = np.c_[XX_pred_stat,XX_pred_freq,XX_pred_wav,XX_pred_en]
+    XX = np.c_[XX_stat,XX_freq,XX_wav]#,XX_en]
+    XX_pred = np.c_[XX_pred_stat,XX_pred_freq,XX_pred_wav]#,XX_pred_en]
 
-    classifier = LogisticRegression(penalty='l1')
+    classifier = RandomForestClassifier()
     classifier.fit(XX,y)
     y_pred = classifier.predict(XX_pred)
     np.savetxt('y_pred.txt', y_pred, fmt='%s')
