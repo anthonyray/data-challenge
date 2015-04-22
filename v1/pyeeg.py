@@ -296,7 +296,7 @@ def bin_power(X,Band,Fs):
 		Next_Freq = float(Band[Freq_Index+1])
 		Power[Freq_Index] = sum(C[floor(Freq/Fs*len(X)):floor(Next_Freq/Fs*len(X))])
 	Power_Ratio = Power/sum(Power)
-	return Power, Power_Ratio
+	return Power
 
 def first_order_diff(X):
 	""" Compute the first order difference of a time series.

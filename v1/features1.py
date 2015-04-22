@@ -101,6 +101,7 @@ X_test_w = np.pad(X_test,((0,0),(0,2192)),mode="constant")
 N = X_train.shape[1]
 T = 30.0 / float(N)  # Sampling period
 f = 1.0 / T # Sampling freq
+f_s = int(f)
 
 X_train_freq = scipy.fftpack.fft(X_train,N,axis=1)
 X_train_freq = (1.0 / float(N) ) * np.apply_along_axis(np.abs,1,X_train_freq)
@@ -116,7 +117,7 @@ freqs = freqs[:N/2]
 # Building features for frequency :
 start_freq = time.time()
 
-XX_train_freq,XX_test_freq = compute_frequency_features_train_test(X_train_freq,X_test_freq)
+XX_train_freq,XX_test_freq = compute_frequency_features_train_test(X_train_freq,X_test_freq,f_s)
 
 XX_train_en, XX_test_en = compute_energy_features_train_test(X_train,X_test,f)
 
@@ -245,11 +246,13 @@ def export_train_test(X_train,y_train,X_pred):
 
     N = X.shape[1]  # Frequency
     T = 30.0 / float(N)
+    f = 1.0 / T
+    f_s = int(f)
     X_f = scipy.fftpack.fft(X,axis=1)
     X_pred_f = scipy.fftpack.fft(X_pred,axis=1)
 
-    XX_freq = compute_frequency_features(X_f)
-    XX_pred_freq = compute_frequency_features(X_pred_f)
+    XX_freq = compute_frequency_features(X_f,f_s)
+    XX_pred_freq = compute_frequency_features(X_pred_f,f_s)
 
     XX_wav = compute_wavelets_features(X_w)
     XX_pred_wav = compute_wavelets_features(X_pred_w)
