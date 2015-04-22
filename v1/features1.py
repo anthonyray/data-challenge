@@ -83,53 +83,15 @@ def compute_wavelets_features(X):
 """
 Frequency Features Construction
 """
+
 from frequency import *
-
-def compute_frequency_features_train_test(X_train,X_test):
-    """Generate frequency features matrix for training set and test set
-
-    Parameters
-    ----------
-    X_train : array, shape=(n,p) where p is a power of 2
-        Training set
-    X_test : array, shape=(m,p) where p is a power of 2
-        Test set
-
-    Returns
-    -------
-    XX_train : array, shape=(n, p)
-        Features training matrix
-    X_test : array, shape=(n,p)
-        Features test matrix
-    """
-
-    return compute_frequency_features(X_train),compute_frequency_features(X_test)
-
-def compute_frequency_features(X):
-    XX = np.c_[
-                     np.mean(X[:,0:N/8]**2,axis=1),
-                     np.mean(X[:,N/8:2*N/8]**2,axis=1),
-                     np.mean(X[:,2*N/8:3*N/8]**2,axis=1),
-                     np.mean(X[:,3*N/8:N/2]**2,axis=1),
-                     scipy.stats.skew(X,axis=1)]
-    return XX
+from energy import *
 
 """
 Static Features Construction
 """
 
-def compute_static_features(X):
-    XX = np.c_[
-                 np.std(X, axis=1),
-                 np.max(X,axis=1),
-                 np.min(X,axis=1)/np.max(X,axis=1),
-    ]
-
-    return XX
-
-def compute_static_features_train_test(X_train,X_test):
-    return compute_static_features(X_train),compute_static_features(X_test)
-
+from static import *
 
 """
 Features Construction
@@ -163,9 +125,9 @@ start_freq = time.time()
 
 XX_train_freq,XX_test_freq = compute_frequency_features_train_test(X_train_freq,X_test_freq)
 
-XX_train_en,XX_test_en = compute_energy_features_train_test(X_train,X_test,f)
+#XX_train_en,XX_test_en = compute_energy_features_train_test(X_train,X_test,f)
 
-nb_freq_features = XX_train_freq.shape[1] + XX_train_en.shape[1]
+nb_freq_features = XX_train_freq.shape[1] #+ XX_train_en.shape[1]
 
 
 climsg.freq_features(time.time()-start_freq,nb_freq_features)
@@ -189,8 +151,8 @@ end_static = time.time()
 climsg.stat_features(end_static-start_static,nb_stat_features)
 # Combining features
 
-XX_train = np.c_[XX_train_stat,XX_train_en,XX_train_freq,XX_train_wav]
-XX_test = np.c_[XX_test_stat,XX_test_en,XX_test_freq,XX_test_wav]
+XX_train = np.c_[XX_train_stat,XX_train_freq,XX_train_wav]
+XX_test = np.c_[XX_test_stat,XX_test_freq,XX_test_wav]
 
 """
 Training classifier
@@ -234,6 +196,21 @@ for y_pred in predictions:
 
 
 """
+Visualize features
+
+"""
+if len(sys.argv) == 2:
+    for i in range(XX_train.shape[1]):
+        plt.close('all')
+        plt.hist(XX_train[np.where(y_train=='N1')][:,i],bins = 20, alpha=0.5, label='N1')
+        plt.hist(XX_train[np.where(y_train=='N2')][:,i],bins = 20, alpha=0.5, label='N2')
+        plt.hist(XX_train[np.where(y_train=='N3')][:,i],bins = 20, alpha=0.5, label='N3')
+        plt.hist(XX_train[np.where(y_train=='R ')][:,i],bins = 20, alpha=0.5, label='R ')
+        plt.hist(XX_train[np.where(y_train=='W ')][:,i],bins = 20, alpha=0.5, label='W ')
+        plt.legend(loc='upper right')
+        plt.show()
+
+"""
 Export prediction
 """
 
@@ -267,7 +244,7 @@ def export(X,y,X_pred):
     y_pred = classifier.predict(XX_pred)
     np.savetxt('y_pred.txt', y_pred, fmt='%s')
 
-if len(sys.argv) > 1:
+if len(sys.argv) == 3:
     climsg.export()
     start_export = time.time()
     export(X,y,X_final_test)

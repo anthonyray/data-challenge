@@ -13,8 +13,8 @@ TODO :
 
 
 DOING :
-- Improve score solely working on classifiers.
-
+- Improve score solely working on classifiers
+- Visualizing features
 DONE :
 - Read paper on EEG features
 - Use wavelets coefficients :
