@@ -68,7 +68,6 @@ def compute_wavelets_features_train_test(X_train,X_test):
 
 def compute_wavelets_features(X):
     XX = np.c_[
-                     np.apply_along_axis(haar_dwt_8,1,X),
                      np.apply_along_axis(db_dwt_4,1,X)
               ]
     return XX
@@ -119,9 +118,9 @@ start_freq = time.time()
 
 XX_train_freq,XX_test_freq = compute_frequency_features_train_test(X_train_freq,X_test_freq)
 
-#XX_train_en,XX_test_en = compute_energy_features_train_test(X_train,X_test,f)
+XX_train_en, XX_test_en = compute_energy_features_train_test(X_train,X_test,f)
 
-nb_freq_features = XX_train_freq.shape[1] #+ XX_train_en.shape[1]
+nb_freq_features = XX_train_freq.shape[1] + XX_train_en.shape[1]
 
 
 climsg.freq_features(time.time()-start_freq,nb_freq_features)
@@ -145,8 +144,8 @@ end_static = time.time()
 climsg.stat_features(end_static-start_static,nb_stat_features)
 # Combining features
 
-XX_train = np.c_[XX_train_stat,XX_train_freq,XX_train_wav]
-XX_test = np.c_[XX_test_stat,XX_test_freq,XX_test_wav]
+XX_train = np.c_[XX_train_stat,XX_train_freq,XX_train_wav,XX_train_en]
+XX_test = np.c_[XX_test_stat,XX_test_freq,XX_test_wav,XX_test_en]
 
 """
 Training classifier
@@ -238,12 +237,44 @@ def export(X,y,X_pred):
     y_pred = classifier.predict(XX_pred)
     np.savetxt('y_pred.txt', y_pred, fmt='%s')
 
+def export_train_test(X_train,y_train,X_pred):
+    # Data Preparation
+    X, X_test, y, y_test = train_test_split(X_train, y_train, test_size=0.3, random_state=42)
+    X_w = np.pad(X,((0,0),(0,2192)),mode="constant")  # Wavelets
+    X_pred_w = np.pad(X_pred,((0,0),(0,2192)),mode="constant")
+
+    N = X.shape[1]  # Frequency
+    T = 30.0 / float(N)
+    X_f = scipy.fftpack.fft(X,axis=1)
+    X_pred_f = scipy.fftpack.fft(X_pred,axis=1)
+
+    XX_freq = compute_frequency_features(X_f)
+    XX_pred_freq = compute_frequency_features(X_pred_f)
+
+    XX_wav = compute_wavelets_features(X_w)
+    XX_pred_wav = compute_wavelets_features(X_pred_w)
+
+    XX_stat = compute_static_features(X)
+    XX_pred_stat = compute_static_features(X_pred)
+
+    XX_en = compute_energy_features(X)
+    XX_pred_en = compute_energy_features(X_pred)
+
+    XX = np.c_[XX_stat,XX_freq,XX_wav,XX_en]
+    XX_pred = np.c_[XX_pred_stat,XX_pred_freq,XX_pred_wav,XX_pred_en]
+
+    classifier = RandomForestClassifier()
+    classifier.fit(XX,y)
+    y_pred = classifier.predict(XX_pred)
+    np.savetxt('y_pred.txt', y_pred, fmt='%s')
+
 if len(sys.argv) == 3:
     climsg.export()
     start_export = time.time()
-    export(X,y,X_final_test)
+    export_train_test(X,y,X_final_test)
     end_export = time.time()
     climsg.done_export(end_export - start_export)
+
 
 
 """
